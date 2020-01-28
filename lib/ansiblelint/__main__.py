@@ -105,6 +105,11 @@ def main():
                       help='path to directories or files to skip. This option'
                            ' is repeatable.',
                       default=[])
+    parser.add_option('-l', action='store_true',
+                      default=False,
+                      dest='resolve_symlinks',
+                      help="Resolve symlinks to real filenames when searching for "
+                           "files to parse")
     parser.add_option('-c', dest='config_file',
                       help='Specify configuration file to use.  Defaults to ".ansible-lint"')
     options, args = parser.parse_args(sys.argv[1:])
@@ -130,6 +135,9 @@ def main():
 
         options.exclude_paths.extend(
             config.get('exclude_paths', []))
+
+        if 'resolve_symlinks' in config:
+            options.resolve_symlinks = options.resolve_symlinks or config['resolve_symlinks']
 
         if 'rulesdir' in config:
             options.rulesdir = options.rulesdir + config['rulesdir']
@@ -184,7 +192,8 @@ def main():
     for playbook in playbooks:
         runner = Runner(rules, playbook, options.tags,
                         options.skip_list, options.exclude_paths,
-                        options.verbosity, checked_files)
+                        options.verbosity, checked_files,
+                        options.resolve_symlinks)
         matches.extend(runner.run())
 
     matches.sort(key=lambda x: (normpath(x.filename), x.linenumber, x.rule.id))

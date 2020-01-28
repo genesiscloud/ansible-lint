@@ -218,7 +218,7 @@ class Match(object):
 class Runner(object):
 
     def __init__(self, rules, playbook, tags, skip_list, exclude_paths,
-                 verbosity=0, checked_files=None):
+                 verbosity=0, checked_files=None, resolve_symlinks=False):
         self.rules = rules
         self.playbooks = set()
         # assume role if directory
@@ -235,6 +235,7 @@ class Runner(object):
         if checked_files is None:
             checked_files = set()
         self.checked_files = checked_files
+        self.resolve_symlinks = resolve_symlinks
 
     def _update_exclude_paths(self, exclude_paths):
         if exclude_paths:
@@ -272,6 +273,11 @@ class Runner(object):
                 visited.add(arg)
 
         matches = list()
+
+        # resolve symlinks to real filenames
+        if self.resolve_symlinks:
+            for file in files:
+                file['path'] = os.path.relpath(os.path.realpath(file['path']))
 
         # remove duplicates from files list
         files = [value for n, value in enumerate(files) if value not in files[:n]]
